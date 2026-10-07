@@ -88,7 +88,7 @@ jobs:
               <application
                   android:allowBackup="true"
                   android:icon="@android:drawable/sym_def_app_icon"
-                  android:label="My Web App"
+                  android:label="Decopart"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
                   android:usesCleartextTraffic="true">
                   <activity
@@ -117,7 +117,7 @@ jobs:
 
           public class MainActivity extends Activity {
               private WebView webView;
-              private static final String TARGET_URL = "https://app.decopartgroup.com/";
+              private static final String TARGET_URL = "https://app.decopartgroup.com";
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -155,5 +155,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: decopart-app-apk
           path: app/build/outputs/apk/debug/*.apk
