@@ -24,7 +24,31 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/webview/app
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
           mkdir -p gradle/wrapper
+
+      - name: Download App Icon
+        run: |
+          if [ -f "icon.png" ]; then
+            cp icon.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          else
+            curl -sL "https://app.decopartgroup.com/favicon.ico" -o app/src/main/res/mipmap-xxxhdpi/ic_launcher.png || true
+            if [ ! -s app/src/main/res/mipmap-xxxhdpi/ic_launcher.png ]; then
+              cp /opt/hostedtoolcache/Java_Zulu_jdk/17.0.20-8/x64/demo/jfc/Notepad/resources/toolbar.gif app/src/main/res/mipmap-xxxhdpi/ic_launcher.png 2>/dev/null || touch app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+            fi
+          fi
+
+      - name: Generate Release Keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/release.keystore \
+            -alias decopartkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass decopart123 \
+            -keypass decopart123 \
+            -dname "CN=Decopart, OU=App, O=DecopartGroup, L=Tehran, ST=Tehran, C=IR"
 
       - name: Create settings.gradle
         run: |
@@ -63,16 +87,27 @@ jobs:
               compileSdk 34
 
               defaultConfig {
-                  applicationId "com.webview.app"
+                  applicationId "com.decopartgroup.app"
                   minSdk 21
                   targetSdk 34
                   versionCode 1
-                  versionName "1.0"
+                  versionName "1.0.0"
+              }
+
+              signingConfigs {
+                  release {
+                      storeFile file('release.keystore')
+                      storePassword 'decopart123'
+                      keyAlias 'decopartkey'
+                      keyPassword 'decopart123'
+                  }
               }
 
               buildTypes {
                   release {
+                      signingConfig signingConfigs.release
                       minifyEnabled false
+                      shrinkResources false
                   }
               }
           }
@@ -87,8 +122,8 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
               <application
                   android:allowBackup="true"
-                  android:icon="@android:drawable/sym_def_app_icon"
-                  android:label="Decopart"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="دکوپارت"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
                   android:usesCleartextTraffic="true">
                   <activity
@@ -149,11 +184,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Debug APK
-        run: gradle assembleDebug
+      - name: Build Release APK
+        run: gradle assembleRelease
 
-      - name: Upload APK Artifact
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: decopart-app-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: decopart-app-release-apk
+          path: app/build/outputs/apk/release/*.apk
